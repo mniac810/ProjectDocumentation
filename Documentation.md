@@ -31,7 +31,7 @@ The project comprises three primary components:
   - Codes motion planning logic in Python.
   - Connects with ROS to execute planning requests and visualize trajectories in RViz.
 
-![Project Architecture](image.png)
+![Project Architecture](/Image/image.png)
 
 
 ## ROS Configuration
@@ -130,23 +130,97 @@ In the process of planning, we create a new launch file to run all the neccessar
 Unity is used to simulate the Ur10e_rg2 robot. With the ROS unity package, Unity is able to simulate the robotic arm needed for the project, and with SkecthFab in Unity package, we are able to load the 3d printer into the Unity scene and work from there.
 
 ### Setting up Unity scene
-**Load URDF model and setup robot**
+The majority of our Unity scene is reuse form Pick and Place tutorial with table enlarge in the X and Z scale too facilitate the size of the UR10e robot. Additionally, we load the UR10e robot the same way we would load the nyrio robot.
 
 **Load 3d Printer**
+
+For loading the 3D printer from sketchfab, we have to install the package sketchfab for Unity. After installation, we interact with the sketchfab tab, choose the option to import .gltf file and drag the .gltf file we downloaded to the window, choose the option using the current scene. The result is the succesfully imported printer.
 
 <!-- **Building Msgs and Srv needed for planning** -->
 **Setup ROS settings in Unity**
 
+We build the neccessery Msgs and Srv that are needed for the project, first are the messages and services that are located inside the ur10e_moveit package. Then, we build the messages that existed in the moveit_msgs/ folder. Which are RobotTrajectory.msgs, CollisionObject.msgs.
 ### ROS Unity Communication
+Unity and Ros communicate through the TCP_IP topics, for the 2 components to have communication, we have to set the IP address and port of the 2 components the same, then we execute the following task.
 
-1. **Publish Target**
-2. **Publish Collision Objects**
-3. **Publish Robot pose**
-4. **Execute Trajectory**
+1. **Publish Collision Objects**
+~~~
+    public void PublishTable()
+    {
+        var tablePose = new PoseMsg
+        {
+            position = m_Table.transform.position.To<FLU>(),
+            orientation = m_Table.transform.rotation.To<FLU>()
+        };
+        tablePose.position.z -= 0.4; 
+        var tableCollisionObject = new CollisionObjectMsg
+        {
+            header = new HeaderMsg
+            {
+                frame_id = "world" 
+            },
+            id = "table",
+            operation = CollisionObjectMsg.ADD, 
+            primitive_poses = new List<PoseMsg> { tablePose }.ToArray(),
+            primitives = new List<SolidPrimitiveMsg>
+            {
+                new SolidPrimitiveMsg
+                {
+                    type = SolidPrimitiveMsg.BOX,
+                    dimensions = new double[] { 5, 5, 0.64 } 
+                }
+            }.ToArray()
+        };
 
+        m_Ros.Publish(m_TopicName1, tableCollisionObject);
+        Debug.Log("Published table collision object.");
+    }
+~~~
+2. **Publish Robot Joints**
+>Code for publish joints into ROS
+~~~
+ public void PublishJoints()
+    {
+        var request = new MoverServiceRequest();
+        request.joints_input = CurrentJointConfig();
+        Debug.Log($"Pick Pose: Position: {CurrentJointConfig()}");
+        // Pick Pose
+        request.pick_pose = new PoseMsg
+        {
+            position = (m_Target.transform.position + m_PickPoseOffset).To<FLU>(),
+            orientation = m_PickOrientation.To<FLU>()
+        };
 
-### Results
-*Summary of the results obtained using Unity.*
+        Debug.Log($"Pick Pose: Position: {request.pick_pose.position.x}, {request.pick_pose.position.y}, {request.pick_pose.position.z} | Orientation: {request.pick_pose.orientation.x}, {request.pick_pose.orientation.y}, {request.pick_pose.orientation.z}, {request.pick_pose.orientation.w}");
+
+        // Place Pose
+        request.place_pose = new PoseMsg
+        {
+            position = (m_TargetPlacement.transform.position + m_PlacePoseOffset).To<FLU>(),
+            orientation = m_PickOrientation.To<FLU>()
+        };
+
+        Debug.Log($"Place Pose: Position: {request.place_pose.position.x}, {request.place_pose.position.y}, {request.place_pose.position.z} | Orientation: {request.place_pose.orientation.x}, {request.place_pose.orientation.y}, {request.place_pose.orientation.z}, {request.place_pose.orientation.w}");
+
+        m_Ros.SendServiceMessage<MoverServiceResponse>(m_RosServiceName, request, TrajectoryResponse);
+    }
+~~~
+3. **Execute Trajectory**
+> If the moverService return a trajectory, then the coroutine to execute trajectories would be run and the robot arm would move arcording to the trajectory.
+~~~
+void TrajectoryResponse(MoverServiceResponse response)
+    {
+        if (response.trajectories.Length > 0)
+        {
+            Debug.Log("Trajectory returned.");
+            StartCoroutine(ExecuteTrajectories(response));
+        }
+        else
+        {
+            Debug.LogError("No trajectory returned from MoverService.");
+        }
+    }
+~~~
 
 ## Algorithm
 ### Introduction CHOMP
@@ -325,7 +399,6 @@ def plan_pick_and_place(req):
 
 
 ### Results
-*Summary of the results obtained using the algorithm.*
 The integration of Unity, ROS, and CHOMP successfully demonstrated:
 
 - Accurate and collision-free motion planning for the UR10e robot.
