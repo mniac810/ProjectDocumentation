@@ -2,9 +2,11 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [ROS](#ros)
-3. [Unity](#unity)
-4. [Algorithm](#algorithm)
+2. [ProjectArchitecture](#2-project-architecture)
+3. [ROS](#ros-configuration)
+4. [Unity](#unity)
+5. [Algorithm](#algorithm)
+6. [Conclustion](#conclussion-and-future-work)
 
 ## Introduction
 
@@ -25,9 +27,11 @@ The project comprises three primary components:
   - Hosts the URDF file of the UR10e robot with the RG2 gripper.
   - Configures custom services and messages for communication with Unity and OMPL.
 
-- **OMPL and RPMstar:**
+- **CHOMP:**
   - Codes motion planning logic in Python.
   - Connects with ROS to execute planning requests and visualize trajectories in RViz.
+
+![Project Architecture](image.png)
 
 
 ## ROS Configuration
@@ -102,12 +106,24 @@ From the beginning tutorial (https://github.com/Unity-Technologies/Unity-Robotic
 
 <!-- Insert files uses and purpose for using -->
 
-### Rviz Intergration
-
-### Results
-*Summary of the results obtained using ROS.*
-
-Using ROS, we have succesfully generated the URDF files for our Ur10e_rg2 robot, 
+### Launch File Addition
+In the process of planning, we create a new launch file to run all the neccessary planning configuration.
+> With the PlanTrajectory.launch file, we set the tcp_ip and tcp_port, create the server node for pkg ros_tcp_endpoint to facilitate Unity Ros communication, the node for our package ur10_e_rg2_moveit is also created with the file mover.py attached as the type
+> 
+> Then we inclue the launch of the file demo.launch to launch alongside our server. The demo.launch file play an intergal part to initialize other planning pipeline with the move_group.launch file.
+~~~
+<launch>
+    <arg name="tcp_ip" default="0.0.0.0"/>
+    <arg name="tcp_port" default="10000"/>
+	
+    <node name="server_endpoint" pkg="ros_tcp_endpoint"    type="default_server_endpoint.py" args="--wait" output="screen" respawn="true">
+		<param name="tcp_ip" type="string" value="$(arg tcp_ip)"/>
+        <param name="tcp_port" type="int" value="$(arg tcp_port)"/>
+	</node>
+    <node name="mover" pkg="ur10e_rg2_moveit" type="mover.py" args="--wait" output="screen"/>
+    <include file="$(find ur10e_rg2_moveit)/launch/demo.launch" />
+</launch>
+~~~
 
 ## Unity
 ### Introduction
@@ -133,29 +149,184 @@ Unity is used to simulate the Ur10e_rg2 robot. With the ROS unity package, Unity
 *Summary of the results obtained using Unity.*
 
 ## Algorithm
-### Introduction OMPL
+### Introduction CHOMP
+The Covariant Hamiltonian Optimization for Motion Planning (CHOMP) is a gradient-based trajectory optimization algorithm that simplifies motion planning for robotic arms. Unlike traditional planners that separate trajectory generation into planning and optimization stages, CHOMP integrates these stages using covariant and functional gradient methods. Starting with an initial trajectory that may be infeasible, CHOMP adjusts it to avoid collisions while optimizing parameters such as joint velocities and accelerations. The algorithm quickly converges to a smooth, collision-free trajectory that can be executed efficiently by the robot. By framing motion planning as an optimization problem, CHOMP leverages the principles of the MMP framework, making it adaptable for high-dimensional tasks.
 
-The **Open Motion Planning Library (OMPL)** is a versatile framework for robotic motion planning. It offers an array of algorithms for solving high-dimensional pathfinding problems, with Probabilistic Roadmaps (PRM) and PRM* among its prominent methods.
+**Implement CHOMP**
+~~~
+<launch>
+  <arg name="start_state_max_bounds_error" default="0.1" />
+  <arg name="jiggle_fraction" default="0.05" />
+  <!-- The request adapters (plugins) used when planning. ORDER MATTERS! -->
+  <arg name="planning_adapters"
+       default="default_planner_request_adapters/LimitMaxCartesianLinkSpeed
+                default_planner_request_adapters/AddTimeParameterization
+                default_planner_request_adapters/ResolveConstraintFrames
+                default_planner_request_adapters/FixWorkspaceBounds
+                default_planner_request_adapters/FixStartStateBounds
+                default_planner_request_adapters/FixStartStateCollision
+                default_planner_request_adapters/FixStartStatePathConstraints"
+                />
 
-The **PRM (Probabilistic Roadmap)** algorithm is a sampling-based planner that builds a graph or "roadmap" of collision-free configurations. It randomly samples points in the configuration space, connecting these points with feasible paths to form a network. During execution, the planner searches this network to identify a path from the start to the goal configuration. PRM is particularly effective in static environments with complex geometry.
+  <param name="planning_plugin" value="chomp_interface/CHOMPPlanner" />
+  <param name="request_adapters" value="$(arg planning_adapters)" />
+  <param name="start_state_max_bounds_error" value="$(arg start_state_max_bounds_error)" />
+  <param name="jiggle_fraction" value="$(arg jiggle_fraction)" />
 
-The **PRM Star (Optimal Probabilistic Roadmap)** algorithm refines the standard PRM by introducing optimality criteria. Instead of simply finding any collision-free path, PRM Star focuses on minimizing a cost metric, such as path length or smoothness. It iteratively improves the roadmap connections, ensuring convergence towards an optimal solution as more samples are added. This makes PRM Star suitable for tasks requiring precision and efficiency, such as the pick-and-place operation in this project.
+  <rosparam command="load" file="$(find ur10e_rg2_moveit)/config/chomp_planning.yaml" />
+</launch>
+~~~
+The above is the planning pipeline for CHOMP
 
+>We set the default planning pipeline in move_group.launch into chomp
+~~~
+<!-- move_group settings -->
+  <arg name="pipeline" default="chomp" />
+  <arg name="allow_trajectory_execution" default="true"/>
+  <arg name="moveit_controller_manager" default="simple" />
+  <arg name="fake_execution_type" default="interpolate"/>
+  <arg name="max_safe_path_cost" default="1"/>
+  <arg name="publish_monitored_planning_scene" default="true"/>
+~~~
 
+>The planning pipeline 
+~~~
+    <include file="$(dirname)/planning_pipeline.launch.xml">
+      <arg name="pipeline" value="chomp" />
+    </include>
+~~~
+
+### Planning Process
 1. **Trajectory Planning Logic:**
    - Written in Python, the planner receives the start and goal configurations from ROS.
-   - The PRM/ PRM Star algorithm computes smooth, collision-free trajectories within the defined constraints.
+   - The CHOMP algorithm computes smooth, collision-free trajectories within the defined constraints.
 
-3. **Unity Execution:**
+2. **Unity Execution:**
    - Validated trajectories are returned to Unity for real-time execution by the robot arm.
 
 
-### Implementation OMPL PRM / PRM Star
-*Details on how the algorithm was implemented in the project.*
+### Trajectory Planning Logic
+> This code for plan_trajectory function take in the move_group current status, the destination pose and the starting point of the joint angle. We take the start angles, parse them into the robot state and set the start state for the move_group. Then we choose the set joint value target as the target pose and we call the plan function.
+~~~
+def plan_trajectory(move_group, destination_pose, start_joint_angles): 
+    current_joint_state = JointState()
+    current_joint_state.name = joint_names
+    current_joint_state.position = start_joint_angles
+
+    moveit_robot_state = RobotState()
+    moveit_robot_state.joint_state = current_joint_state
+    move_group.set_start_state(moveit_robot_state)
+
+    move_group.set_joint_value_target(destination_pose,True)
+    plan = move_group.plan()
+
+    if not plan:
+        exception_str = """
+            Trajectory could not be planned for a destination of {} with starting joint angles {}.
+            Please make sure target and destination are reachable by the robot.
+        """.format(destination_pose, destination_pose)
+        raise Exception(exception_str)
+
+
+    return planCompat(plan)
+~~~
+
+>For planning pick and place process, first, we set the planner id to CHOMP to use under the OMPL library, the we set 5 poses for the grasping process. We plan each pose with the starting configuration or the previous pose planned as the starting joint vale. Finally, we append all the poses into a trajectory and publish them as a trajectory.
+~~~
+def plan_pick_and_place(req):
+    scene = moveit_commander.PlanningSceneInterface()
+    rospy.logwarn(scene.get_known_object_names())
+
+    response = MoverServiceResponse()
+
+    group_name = "arm"
+    move_group = moveit_commander.MoveGroupCommander(group_name)
+
+    move_group.set_planner_id("CHOMP")
+
+    move_group.set_goal_tolerance(0.005) 
+    move_group.set_planning_time(10)  
+    current_robot_joint_configuration = req.joints_input.joints
+    # publish_pose_as_axes(req.pick_pose, "pre_grasp_pose_topic")
+    '''
+    req.pick_pose.orientation.x = 0.5
+    req.pick_pose.orientation.y = -0.5
+    req.pick_pose.orientation.z = -0.5
+    req.pick_pose.orientation.w = 0.5
+    '''
+
+    # Pre grasp - position gripper directly above target object
+    pre_grasp_pose = plan_trajectory(move_group, req.pick_pose, current_robot_joint_configuration)
+    
+    # If the trajectory has no points, planning has failed and we return an empty response
+    if not pre_grasp_pose.joint_trajectory.points:
+        return response
+
+    previous_ending_joint_angles = pre_grasp_pose.joint_trajectory.points[-1].positions
+
+    # Grasp - lower gripper so that fingers are on either side of object
+    pick_pose = copy.deepcopy(req.pick_pose)
+    pick_pose.position.z -= 0.32  # Static value coming from Unity, TODO: pass along with request
+    grasp_pose = plan_trajectory(move_group, pick_pose, previous_ending_joint_angles)
+    
+    if not grasp_pose.joint_trajectory.points:
+        return response
+
+    previous_ending_joint_angles = grasp_pose.joint_trajectory.points[-1].positions
+
+    # Pick Up - raise gripper back to the pre grasp position
+    pick_up_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    
+    if not pick_up_pose.joint_trajectory.points:
+        return response
+
+    previous_ending_joint_angles = pick_up_pose.joint_trajectory.points[-1].positions
+
+    '''
+    # Slightly move back
+
+    req.pick_pose.position.x += 0.2
+    slightly_move_back_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    
+    if not slightly_move_back_pose.joint_trajectory.points:
+        return response
+    
+    previous_ending_joint_angles = slightly_move_back_pose.joint_trajectory.points[-1].positions
+
+    # Slightly move diagonal
+    req.pick_pose.position.y -= 0.5
+    req.pick_pose.position.z += 0.5
+    slightly_move_diagional_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    
+    if not slightly_move_diagional_pose.joint_trajectory.points:
+        return response
+    
+    previous_ending_joint_angles = slightly_move_diagional_pose.joint_trajectory.points[-1].positions
+
+    req.place_pose.position.x -= 0.1
+    req.place_pose.position.y -= 0
+    place_pose = plan_trajectory(move_group, req.place_pose, previous_ending_joint_angles)
+
+    if not place_pose.joint_trajectory.points:
+        return response
+
+    # If trajectory planning worked for all pick and place stages, add plan to response
+    response.trajectories.append(pre_grasp_pose)
+    response.trajectories.append(grasp_pose)
+    response.trajectories.append(pick_up_pose)
+    response.trajectories.append(place_pose)
+    # response.trajectories.append(drop_pose)
+
+    move_group.clear_pose_targets()
+
+    return response
+
+~~~
+
 
 ### Results
 *Summary of the results obtained using the algorithm.*
-The integration of Unity, ROS, and OMPL with CHOMP successfully demonstrated:
+The integration of Unity, ROS, and CHOMP successfully demonstrated:
 
 - Accurate and collision-free motion planning for the UR10e robot.
 - Seamless data exchange between Unity and ROS via custom services and messages.
