@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Group 7 Project Report</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="group-7-project-report">Group 7 Project Report</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#2-project-architecture">ProjectArchitecture</a></li>
+<li><a href="#ros-configuration">ROS</a></li>
+<li><a href="#unity">Unity</a></li>
+<li><a href="#algorithm">Algorithm</a></li>
+<li><a href="#conclussion-and-future-work">Conclustion</a></li>
+</ol>
+<h2 id="introduction">Introduction</h2>
+<p>This report details the implementation of a robot arm pick-and-place project, utilizing Unity for visualization and target specification, ROS for robot configuration and communication, and OMPL (Open Motion Planning Library) with CHOMP (Covariant Hamiltonian Optimization for Motion Planning) as the motion planner. The UR10e robot, equipped with an RG2 gripper, serves as the robotic manipulator. The project demonstrates seamless integration between simulation and execution, involving Unity for publishing target and placement data, ROS for robot and service configuration, and Python for OMPL-based motion planning.</p>
+<p>The pick-and-place operation is a fundamental task in robotics, often employed in manufacturing, logistics, and automation. This project integrates multiple tools and frameworks to simulate and execute a pick-and-place operation for the UR10e robot with the RG2 gripper. Unity facilitates intuitive visualization and input, while ROS serves as the middleware for robot configuration and communication. The OMPL library, enhanced with the CHOMP optimizer, is used for generating collision-free trajectories. RViz aids in visualizing the planned motion before execution in Unity.</p>
+<h2 id="2-project-architecture">2. Project Architecture</h2>
+<p>The project comprises three primary components:</p>
+<ul>
+<li>
+<p><strong>Unity:</strong></p>
+<ul>
+<li>Publishes coordinates for the pick-and-place targets.</li>
+<li>Defines the polygon of the table placement area.</li>
+<li>Includes an AI printer as an additional element in the workspace.</li>
+</ul>
+</li>
+<li>
+<p><strong>ROS:</strong></p>
+<ul>
+<li>Hosts the URDF file of the UR10e robot with the RG2 gripper.</li>
+<li>Configures custom services and messages for communication with Unity and OMPL.</li>
+</ul>
+</li>
+<li>
+<p><strong>CHOMP:</strong></p>
+<ul>
+<li>Codes motion planning logic in Python.</li>
+<li>Connects with ROS to execute planning requests and visualize trajectories in RViz.</li>
+</ul>
+</li>
+</ul>
+<p><img src="file:////Image/image.png" alt="Project Architecture"></p>
+<h2 id="ros-configuration">ROS Configuration</h2>
+<p>The ROS is responsible for the below functionalities:</p>
+<ol>
+<li>
+<p><strong>URDF File Configuration:</strong></p>
+<ul>
+<li>The URDF file of the UR10e robot is compiled.</li>
+<li>The RG2 gripper is attached and configured with appropriate joint and end-effector definitions.</li>
+</ul>
+</li>
+<li>
+<p><strong>Custom Service and Message Setup:</strong></p>
+<ul>
+<li>Custom ROS services and messages are defined to:
+<ul>
+<li>Receive target and placement data from Unity.</li>
+<li>Forward planning requests to the OMPL planner.</li>
+<li>Return computed trajectories to Unity.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>RViz Integration:</strong></p>
+<ul>
+<li>RViz is used for visualizing the robot’s planned trajectories.</li>
+</ul>
+</li>
+<li>
+<p><strong>Moveit configuration:</strong></p>
+<ul>
+<li>Generate moveit configuration for the use of planning.</li>
+</ul>
+</li>
+</ol>
+<!-- 
+### Implementation
+*Details on how ROS was implemented in the project.* -->
+<h3 id="urdf-file-generations">URDF file generations</h3>
+<p><strong>UR10e Robot:</strong> The resource for the ur10e robot is at follow: <a href="https://github.com/ros-industrial/universal_robot">https://github.com/ros-industrial/universal_robot</a></p>
+<p><strong>RG2 Gripper:</strong> The resource for the RG2 gripper is at follow: <a href="https://github.com/Osaka-University-Harada-Laboratory/onrobot">https://github.com/Osaka-University-Harada-Laboratory/onrobot</a></p>
+<p><strong>The Step for UR10e_RG2 robot generations:</strong>
+The moveit configuration are genarated using moveit assistant. The steps are the following:</p>
+<ol>
+<li>Load the URDF File:
+<ul>
+<li>Import the UR10e URDF file with the RG2 gripper attached.</li>
+<li>Verify joint limits, end-effector configurations, and collision properties.</li>
+</ul>
+</li>
+<li>Define the Planning Group:
+<ul>
+<li>Create a planning group for the robot’s manipulator.</li>
+<li>Include all relevant joints and links for the arm and gripper.</li>
+</ul>
+</li>
+<li>Setup the Robot Pose:
+<ul>
+<li>Specify default poses for the robot’s start and goal configurations.</li>
+</ul>
+</li>
+<li>Define End-Effector Settings:
+<ul>
+<li>Configure the RG2 gripper as the end-effector.</li>
+<li>Set up gripper parameters like grasp width and actuation limits.</li>
+</ul>
+</li>
+<li>Test Configuration in RViz:
+<ul>
+<li>Launch RViz to validate the setup.</li>
+<li>Perform preliminary motion planning tests to ensure compatibility.</li>
+</ul>
+</li>
+</ol>
+<h3 id="custom-service-and-message-setup">Custom Service and Message Setup:</h3>
+<pre><code># Service request
+Ur10eMoveitJoints joints_input
+geometry_msgs/Pose pick_pose
+geometry_msgs/Pose place_pose
+
+---
+# Service response
+#Ur10eTrajectory trajectories
+moveit_msgs/RobotTrajectory[] trajectories
+</code></pre>
+<p>The above is the code for the MoverService.srv that receive the joint inputs, pick pose and place pose then return the trajectories for Unity to execute. It receive UniversalRobot.msgs as input for the request then return the Ur10eTrajectory.msg as the response.</p>
+<pre><code>float64[6] joints
+geometry_msgs/Pose pick_pose
+geometry_msgs/Pose place_pose
+</code></pre>
+<p><em>The above is the UniversalRobotsJointsMsg.msg</em></p>
+<pre><code>moveit_msgs/RobotTrajectory[] trajectory
+</code></pre>
+<p><em>The above is the Ur10eTrajectory.msg</em></p>
+<h3 id="moveit-configuration">Moveit Configuration.</h3>
+<p>From the beginning tutorial (<a href="https://github.com/Unity-Technologies/Unity-Robotics-Hub/tree/main/tutorials/pick_and_place">https://github.com/Unity-Technologies/Unity-Robotics-Hub/tree/main/tutorials/pick_and_place</a>), we reuse the moveit_msgs folder with the following service and messages.</p>
+<!-- Insert files uses and purpose for using -->
+<h3 id="launch-file-addition">Launch File Addition</h3>
+<p>In the process of planning, we create a new launch file to run all the neccessary planning configuration.</p>
+<blockquote>
+<p>With the PlanTrajectory.launch file, we set the tcp_ip and tcp_port, create the server node for pkg ros_tcp_endpoint to facilitate Unity Ros communication, the node for our package ur10_e_rg2_moveit is also created with the file <a href="http://mover.py">mover.py</a> attached as the type</p>
+<p>Then we inclue the launch of the file demo.launch to launch alongside our server. The demo.launch file play an intergal part to initialize other planning pipeline with the move_group.launch file.</p>
+</blockquote>
+<pre><code>&lt;launch&gt;
+    &lt;arg name=&quot;tcp_ip&quot; default=&quot;0.0.0.0&quot;/&gt;
+    &lt;arg name=&quot;tcp_port&quot; default=&quot;10000&quot;/&gt;
+	
+    &lt;node name=&quot;server_endpoint&quot; pkg=&quot;ros_tcp_endpoint&quot;    type=&quot;default_server_endpoint.py&quot; args=&quot;--wait&quot; output=&quot;screen&quot; respawn=&quot;true&quot;&gt;
+		&lt;param name=&quot;tcp_ip&quot; type=&quot;string&quot; value=&quot;$(arg tcp_ip)&quot;/&gt;
+        &lt;param name=&quot;tcp_port&quot; type=&quot;int&quot; value=&quot;$(arg tcp_port)&quot;/&gt;
+	&lt;/node&gt;
+    &lt;node name=&quot;mover&quot; pkg=&quot;ur10e_rg2_moveit&quot; type=&quot;mover.py&quot; args=&quot;--wait&quot; output=&quot;screen&quot;/&gt;
+    &lt;include file=&quot;$(find ur10e_rg2_moveit)/launch/demo.launch&quot; /&gt;
+&lt;/launch&gt;
+</code></pre>
+<h2 id="unity">Unity</h2>
+<h3 id="introduction-1">Introduction</h3>
+<p>Unity is used to simulate the Ur10e_rg2 robot. With the ROS unity package, Unity is able to simulate the robotic arm needed for the project, and with SkecthFab in Unity package, we are able to load the 3d printer into the Unity scene and work from there.</p>
+<h3 id="setting-up-unity-scene">Setting up Unity scene</h3>
+<p>The majority of our Unity scene is reuse form Pick and Place tutorial with table enlarge in the X and Z scale too facilitate the size of the UR10e robot. Additionally, we load the UR10e robot the same way we would load the nyrio robot.</p>
+<p><strong>Load 3d Printer</strong></p>
+<p>For loading the 3D printer from sketchfab, we have to install the package sketchfab for Unity. After installation, we interact with the sketchfab tab, choose the option to import .gltf file and drag the .gltf file we downloaded to the window, choose the option using the current scene. The result is the succesfully imported printer.</p>
+<!-- **Building Msgs and Srv needed for planning** -->
+<p><strong>Setup ROS settings in Unity</strong></p>
+<p>We build the neccessery Msgs and Srv that are needed for the project, first are the messages and services that are located inside the ur10e_moveit package. Then, we build the messages that existed in the moveit_msgs/ folder. Which are RobotTrajectory.msgs, CollisionObject.msgs.</p>
+<h3 id="ros-unity-communication">ROS Unity Communication</h3>
+<p>Unity and Ros communicate through the TCP_IP topics, for the 2 components to have communication, we have to set the IP address and port of the 2 components the same, then we execute the following task.</p>
+<ol>
+<li><strong>Publish Collision Objects</strong></li>
+</ol>
+<pre><code>    public void PublishTable()
+    {
+        var tablePose = new PoseMsg
+        {
+            position = m_Table.transform.position.To&lt;FLU&gt;(),
+            orientation = m_Table.transform.rotation.To&lt;FLU&gt;()
+        };
+        tablePose.position.z -= 0.4; 
+        var tableCollisionObject = new CollisionObjectMsg
+        {
+            header = new HeaderMsg
+            {
+                frame_id = &quot;world&quot; 
+            },
+            id = &quot;table&quot;,
+            operation = CollisionObjectMsg.ADD, 
+            primitive_poses = new List&lt;PoseMsg&gt; { tablePose }.ToArray(),
+            primitives = new List&lt;SolidPrimitiveMsg&gt;
+            {
+                new SolidPrimitiveMsg
+                {
+                    type = SolidPrimitiveMsg.BOX,
+                    dimensions = new double[] { 5, 5, 0.64 } 
+                }
+            }.ToArray()
+        };
+
+        m_Ros.Publish(m_TopicName1, tableCollisionObject);
+        Debug.Log(&quot;Published table collision object.&quot;);
+    }
+</code></pre>
+<ol start="2">
+<li><strong>Publish Robot Joints</strong></li>
+</ol>
+<blockquote>
+<p>Code for publish joints into ROS</p>
+</blockquote>
+<pre><code> public void PublishJoints()
+    {
+        var request = new MoverServiceRequest();
+        request.joints_input = CurrentJointConfig();
+        Debug.Log($&quot;Pick Pose: Position: {CurrentJointConfig()}&quot;);
+        // Pick Pose
+        request.pick_pose = new PoseMsg
+        {
+            position = (m_Target.transform.position + m_PickPoseOffset).To&lt;FLU&gt;(),
+            orientation = m_PickOrientation.To&lt;FLU&gt;()
+        };
+
+        Debug.Log($&quot;Pick Pose: Position: {request.pick_pose.position.x}, {request.pick_pose.position.y}, {request.pick_pose.position.z} | Orientation: {request.pick_pose.orientation.x}, {request.pick_pose.orientation.y}, {request.pick_pose.orientation.z}, {request.pick_pose.orientation.w}&quot;);
+
+        // Place Pose
+        request.place_pose = new PoseMsg
+        {
+            position = (m_TargetPlacement.transform.position + m_PlacePoseOffset).To&lt;FLU&gt;(),
+            orientation = m_PickOrientation.To&lt;FLU&gt;()
+        };
+
+        Debug.Log($&quot;Place Pose: Position: {request.place_pose.position.x}, {request.place_pose.position.y}, {request.place_pose.position.z} | Orientation: {request.place_pose.orientation.x}, {request.place_pose.orientation.y}, {request.place_pose.orientation.z}, {request.place_pose.orientation.w}&quot;);
+
+        m_Ros.SendServiceMessage&lt;MoverServiceResponse&gt;(m_RosServiceName, request, TrajectoryResponse);
+    }
+</code></pre>
+<ol start="3">
+<li><strong>Execute Trajectory</strong></li>
+</ol>
+<blockquote>
+<p>If the moverService return a trajectory, then the coroutine to execute trajectories would be run and the robot arm would move arcording to the trajectory.</p>
+</blockquote>
+<pre><code>void TrajectoryResponse(MoverServiceResponse response)
+    {
+        if (response.trajectories.Length &gt; 0)
+        {
+            Debug.Log(&quot;Trajectory returned.&quot;);
+            StartCoroutine(ExecuteTrajectories(response));
+        }
+        else
+        {
+            Debug.LogError(&quot;No trajectory returned from MoverService.&quot;);
+        }
+    }
+</code></pre>
+<h2 id="algorithm">Algorithm</h2>
+<h3 id="introduction-chomp">Introduction CHOMP</h3>
+<p>The Covariant Hamiltonian Optimization for Motion Planning (CHOMP) is a gradient-based trajectory optimization algorithm that simplifies motion planning for robotic arms. Unlike traditional planners that separate trajectory generation into planning and optimization stages, CHOMP integrates these stages using covariant and functional gradient methods. Starting with an initial trajectory that may be infeasible, CHOMP adjusts it to avoid collisions while optimizing parameters such as joint velocities and accelerations. The algorithm quickly converges to a smooth, collision-free trajectory that can be executed efficiently by the robot. By framing motion planning as an optimization problem, CHOMP leverages the principles of the MMP framework, making it adaptable for high-dimensional tasks.</p>
+<p><strong>Implement CHOMP</strong></p>
+<pre><code>&lt;launch&gt;
+  &lt;arg name=&quot;start_state_max_bounds_error&quot; default=&quot;0.1&quot; /&gt;
+  &lt;arg name=&quot;jiggle_fraction&quot; default=&quot;0.05&quot; /&gt;
+  &lt;!-- The request adapters (plugins) used when planning. ORDER MATTERS! --&gt;
+  &lt;arg name=&quot;planning_adapters&quot;
+       default=&quot;default_planner_request_adapters/LimitMaxCartesianLinkSpeed
+                default_planner_request_adapters/AddTimeParameterization
+                default_planner_request_adapters/ResolveConstraintFrames
+                default_planner_request_adapters/FixWorkspaceBounds
+                default_planner_request_adapters/FixStartStateBounds
+                default_planner_request_adapters/FixStartStateCollision
+                default_planner_request_adapters/FixStartStatePathConstraints&quot;
+                /&gt;
+
+  &lt;param name=&quot;planning_plugin&quot; value=&quot;chomp_interface/CHOMPPlanner&quot; /&gt;
+  &lt;param name=&quot;request_adapters&quot; value=&quot;$(arg planning_adapters)&quot; /&gt;
+  &lt;param name=&quot;start_state_max_bounds_error&quot; value=&quot;$(arg start_state_max_bounds_error)&quot; /&gt;
+  &lt;param name=&quot;jiggle_fraction&quot; value=&quot;$(arg jiggle_fraction)&quot; /&gt;
+
+  &lt;rosparam command=&quot;load&quot; file=&quot;$(find ur10e_rg2_moveit)/config/chomp_planning.yaml&quot; /&gt;
+&lt;/launch&gt;
+</code></pre>
+<p>The above is the planning pipeline for CHOMP</p>
+<blockquote>
+<p>We set the default planning pipeline in move_group.launch into chomp</p>
+</blockquote>
+<pre><code>&lt;!-- move_group settings --&gt;
+  &lt;arg name=&quot;pipeline&quot; default=&quot;chomp&quot; /&gt;
+  &lt;arg name=&quot;allow_trajectory_execution&quot; default=&quot;true&quot;/&gt;
+  &lt;arg name=&quot;moveit_controller_manager&quot; default=&quot;simple&quot; /&gt;
+  &lt;arg name=&quot;fake_execution_type&quot; default=&quot;interpolate&quot;/&gt;
+  &lt;arg name=&quot;max_safe_path_cost&quot; default=&quot;1&quot;/&gt;
+  &lt;arg name=&quot;publish_monitored_planning_scene&quot; default=&quot;true&quot;/&gt;
+</code></pre>
+<blockquote>
+<p>The planning pipeline</p>
+</blockquote>
+<pre><code>    &lt;include file=&quot;$(dirname)/planning_pipeline.launch.xml&quot;&gt;
+      &lt;arg name=&quot;pipeline&quot; value=&quot;chomp&quot; /&gt;
+    &lt;/include&gt;
+</code></pre>
+<h3 id="planning-process">Planning Process</h3>
+<ol>
+<li>
+<p><strong>Trajectory Planning Logic:</strong></p>
+<ul>
+<li>Written in Python, the planner receives the start and goal configurations from ROS.</li>
+<li>The CHOMP algorithm computes smooth, collision-free trajectories within the defined constraints.</li>
+</ul>
+</li>
+<li>
+<p><strong>Unity Execution:</strong></p>
+<ul>
+<li>Validated trajectories are returned to Unity for real-time execution by the robot arm.</li>
+</ul>
+</li>
+</ol>
+<h3 id="trajectory-planning-logic">Trajectory Planning Logic</h3>
+<blockquote>
+<p>This code for plan_trajectory function take in the move_group current status, the destination pose and the starting point of the joint angle. We take the start angles, parse them into the robot state and set the start state for the move_group. Then we choose the set joint value target as the target pose and we call the plan function.</p>
+</blockquote>
+<pre><code>def plan_trajectory(move_group, destination_pose, start_joint_angles): 
+    current_joint_state = JointState()
+    current_joint_state.name = joint_names
+    current_joint_state.position = start_joint_angles
+
+    moveit_robot_state = RobotState()
+    moveit_robot_state.joint_state = current_joint_state
+    move_group.set_start_state(moveit_robot_state)
+
+    move_group.set_joint_value_target(destination_pose,True)
+    plan = move_group.plan()
+
+    if not plan:
+        exception_str = &quot;&quot;&quot;
+            Trajectory could not be planned for a destination of {} with starting joint angles {}.
+            Please make sure target and destination are reachable by the robot.
+        &quot;&quot;&quot;.format(destination_pose, destination_pose)
+        raise Exception(exception_str)
+
+
+    return planCompat(plan)
+</code></pre>
+<blockquote>
+<p>For planning pick and place process, first, we set the planner id to CHOMP to use under the OMPL library, the we set 5 poses for the grasping process. We plan each pose with the starting configuration or the previous pose planned as the starting joint vale. Finally, we append all the poses into a trajectory and publish them as a trajectory.</p>
+</blockquote>
+<pre><code>def plan_pick_and_place(req):
+    scene = moveit_commander.PlanningSceneInterface()
+    rospy.logwarn(scene.get_known_object_names())
+
+    response = MoverServiceResponse()
+
+    group_name = &quot;arm&quot;
+    move_group = moveit_commander.MoveGroupCommander(group_name)
+
+    move_group.set_planner_id(&quot;CHOMP&quot;)
+
+    move_group.set_goal_tolerance(0.005) 
+    move_group.set_planning_time(10)  
+    current_robot_joint_configuration = req.joints_input.joints
+    # publish_pose_as_axes(req.pick_pose, &quot;pre_grasp_pose_topic&quot;)
+    '''
+    req.pick_pose.orientation.x = 0.5
+    req.pick_pose.orientation.y = -0.5
+    req.pick_pose.orientation.z = -0.5
+    req.pick_pose.orientation.w = 0.5
+    '''
+
+    # Pre grasp - position gripper directly above target object
+    pre_grasp_pose = plan_trajectory(move_group, req.pick_pose, current_robot_joint_configuration)
+    
+    # If the trajectory has no points, planning has failed and we return an empty response
+    if not pre_grasp_pose.joint_trajectory.points:
+        return response
+
+    previous_ending_joint_angles = pre_grasp_pose.joint_trajectory.points[-1].positions
+
+    # Grasp - lower gripper so that fingers are on either side of object
+    pick_pose = copy.deepcopy(req.pick_pose)
+    pick_pose.position.z -= 0.32  # Static value coming from Unity, TODO: pass along with request
+    grasp_pose = plan_trajectory(move_group, pick_pose, previous_ending_joint_angles)
+    
+    if not grasp_pose.joint_trajectory.points:
+        return response
+
+    previous_ending_joint_angles = grasp_pose.joint_trajectory.points[-1].positions
+
+    # Pick Up - raise gripper back to the pre grasp position
+    pick_up_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    
+    if not pick_up_pose.joint_trajectory.points:
+        return response
+
+    previous_ending_joint_angles = pick_up_pose.joint_trajectory.points[-1].positions
+
+    '''
+    # Slightly move back
+
+    req.pick_pose.position.x += 0.2
+    slightly_move_back_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    
+    if not slightly_move_back_pose.joint_trajectory.points:
+        return response
+    
+    previous_ending_joint_angles = slightly_move_back_pose.joint_trajectory.points[-1].positions
+
+    # Slightly move diagonal
+    req.pick_pose.position.y -= 0.5
+    req.pick_pose.position.z += 0.5
+    slightly_move_diagional_pose = plan_trajectory(move_group, req.pick_pose, previous_ending_joint_angles)
+    
+    if not slightly_move_diagional_pose.joint_trajectory.points:
+        return response
+    
+    previous_ending_joint_angles = slightly_move_diagional_pose.joint_trajectory.points[-1].positions
+
+    req.place_pose.position.x -= 0.1
+    req.place_pose.position.y -= 0
+    place_pose = plan_trajectory(move_group, req.place_pose, previous_ending_joint_angles)
+
+    if not place_pose.joint_trajectory.points:
+        return response
+
+    # If trajectory planning worked for all pick and place stages, add plan to response
+    response.trajectories.append(pre_grasp_pose)
+    response.trajectories.append(grasp_pose)
+    response.trajectories.append(pick_up_pose)
+    response.trajectories.append(place_pose)
+    # response.trajectories.append(drop_pose)
+
+    move_group.clear_pose_targets()
+
+    return response
+
+</code></pre>
+<h3 id="results">Results</h3>
+<p>The integration of Unity, ROS, and CHOMP successfully demonstrated:</p>
+<ul>
+<li>Accurate and collision-free motion planning for the UR10e robot.</li>
+<li>Seamless data exchange between Unity and ROS via custom services and messages.</li>
+<li>Realistic simulation of the pick-and-place operation with visual feedback in Unity and RViz.</li>
+<li>Dynamic adaptability to workspace constraints, including polygonal boundaries and obstacles.</li>
+</ul>
+<h3 id="conclussion-and-future-work">Conclussion and Future Work</h3>
+<p>This project highlights the potential of combining Unity, ROS, and OMPL for complex robotic tasks. Future enhancements may include:</p>
+<ul>
+<li>Adding real-time obstacle detection and avoidance using sensors.</li>
+<li>Integrating machine learning for adaptive planning and execution.</li>
+<li>Extending the project to include multi-robot coordination.</li>
+</ul>
+<p><strong>References</strong></p>
+<ol>
+<li>Unity Robotics Hub Documentation.</li>
+<li>ROS Wiki: URDF, Services, and RViz.</li>
+<li>OMPL Documentation: CHOMP Algorithm.</li>
+<li>Universal Robots UR10e Technical Specifications.</li>
+<li>OnRobot RG2 Gripper Documentation.</li>
+</ol>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>

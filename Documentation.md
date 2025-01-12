@@ -417,6 +417,6 @@ This project highlights the potential of combining Unity, ROS, and OMPL for comp
 
 1. Unity Robotics Hub Documentation.
 2. ROS Wiki: URDF, Services, and RViz.
-3. OMPL Documentation: CHOMP Algorithm.
+3. CHOMP Documentation: CHOMP Algorithm.
 4. Universal Robots UR10e Technical Specifications.
 5. OnRobot RG2 Gripper Documentation.
