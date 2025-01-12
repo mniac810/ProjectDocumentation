@@ -1,0 +1,115 @@
+**Report on Robot Arm Pick and Place Project Using Unity, ROS, and OMPL Planner with CHOMP Optimizer**
+
+---
+
+**Abstract**
+
+This report details the implementation of a robot arm pick-and-place project, utilizing Unity for visualization and target specification, ROS for robot configuration and communication, and OMPL (Open Motion Planning Library) with CHOMP (Covariant Hamiltonian Optimization for Motion Planning) as the motion planner. The UR10e robot, equipped with an RG2 gripper, serves as the robotic manipulator. The project demonstrates seamless integration between simulation and execution, involving Unity for publishing target and placement data, ROS for robot and service configuration, and Python for OMPL-based motion planning.
+
+---
+
+**1. Introduction**
+
+The pick-and-place operation is a fundamental task in robotics, often employed in manufacturing, logistics, and automation. This project integrates multiple tools and frameworks to simulate and execute a pick-and-place operation for the UR10e robot with the RG2 gripper. Unity facilitates intuitive visualization and input, while ROS serves as the middleware for robot configuration and communication. The OMPL library, enhanced with the CHOMP optimizer, is used for generating collision-free trajectories. RViz aids in visualizing the planned motion before execution in Unity.
+
+---
+
+**2. Project Architecture**
+
+The project comprises three primary components:
+
+- **Unity:**
+  - Publishes coordinates for the pick-and-place targets.
+  - Defines the polygon of the table placement area.
+  - Includes an AI printer as an additional element in the workspace.
+
+- **ROS:**
+  - Hosts the URDF file of the UR10e robot with the RG2 gripper.
+  - Configures custom services and messages for communication with Unity and OMPL.
+
+- **OMPL with CHOMP Optimizer:**
+  - Codes motion planning logic in Python.
+  - Connects with ROS to execute planning requests and visualize trajectories in RViz.
+
+---
+
+**3. Unity Implementation**
+
+Unity serves as the front-end for:
+
+1. **Target and Placement Data Publication:**
+   - The coordinates of the pick target and placement target are generated and published.
+   - Unity also defines the polygonal boundary of the table’s placement area to ensure feasible planning.
+
+2. **AI Printer Simulation:**
+   - An AI-driven printer is included to represent a dynamic obstacle or auxiliary equipment in the workspace.
+
+Unity communicates these data points to ROS using a custom publisher configured with the ROS-TCP Connector package.
+
+---
+
+**4. ROS Configuration**
+
+The Robot Operating System (ROS) is used for:
+
+1. **URDF File Configuration:**
+   - The URDF file of the UR10e robot is compiled.
+   - The RG2 gripper is attached and configured with appropriate joint and end-effector definitions.
+
+2. **Custom Service and Message Setup:**
+   - Custom ROS services and messages are defined to:
+     - Receive target and placement data from Unity.
+     - Forward planning requests to the OMPL planner.
+     - Return computed trajectories to Unity.
+
+3. **RViz Integration:**
+   - RViz is used for visualizing the robot’s planned trajectories.
+
+---
+
+**5. OMPL Motion Planning with CHOMP**
+
+The OMPL library, with CHOMP as the optimizer, handles motion planning:
+
+1. **Trajectory Planning Logic:**
+   - Written in Python, the planner receives the start and goal configurations from ROS.
+   - The CHOMP algorithm computes smooth, collision-free trajectories within the defined constraints.
+
+2. **ROS and RViz Integration:**
+   - The planner interfaces with ROS to process planning requests.
+   - Trajectories are visualized in RViz to validate motion before execution.
+
+3. **Unity Execution:**
+   - Validated trajectories are returned to Unity for real-time execution by the robot arm.
+
+---
+
+**6. Results and Observations**
+
+The integration of Unity, ROS, and OMPL with CHOMP successfully demonstrated:
+
+- Accurate and collision-free motion planning for the UR10e robot.
+- Seamless data exchange between Unity and ROS via custom services and messages.
+- Realistic simulation of the pick-and-place operation with visual feedback in Unity and RViz.
+- Dynamic adaptability to workspace constraints, including polygonal boundaries and obstacles.
+
+---
+
+**7. Conclusion and Future Work**
+
+This project highlights the potential of combining Unity, ROS, and OMPL for complex robotic tasks. Future enhancements may include:
+
+- Adding real-time obstacle detection and avoidance using sensors.
+- Integrating machine learning for adaptive planning and execution.
+- Extending the project to include multi-robot coordination.
+
+---
+
+**References**
+
+1. Unity Robotics Hub Documentation.
+2. ROS Wiki: URDF, Services, and RViz.
+3. OMPL Documentation: CHOMP Algorithm.
+4. Universal Robots UR10e Technical Specifications.
+5. OnRobot RG2 Gripper Documentation.
+
